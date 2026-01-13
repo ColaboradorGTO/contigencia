@@ -88,15 +88,15 @@ export async function getCertOptions(senha, fallbackPfxPath = './GTO COMERCIO 20
   // -----------------------------
   // 3) PEM BASE64 (cert + key)
   // -----------------------------
-  // if (process.env.CERT_PEM_CERT_BASE64 && process.env.CERT_PEM_KEY_BASE64) {
-  //   try {
-  //     const cert = Buffer.from(process.env.CERT_PEM_CERT_BASE64, "base64");
-  //     const key = Buffer.from(process.env.CERT_PEM_KEY_BASE64, "base64");
-  //     return { cert, key };
-  //   } catch (e) {
-  //     console.error("ERRO: CERT_PEM_*_BASE64 inválido:", e.message);
-  //   }
-  // }
+  if (process.env.CERT_PEM_CERT_BASE64 && process.env.CERT_PEM_KEY_BASE64) {
+    try {
+      const cert = Buffer.from(process.env.CERT_PEM_CERT_BASE64, "base64");
+      const key = Buffer.from(process.env.CERT_PEM_KEY_BASE64, "base64");
+      return { cert, key };
+    } catch (e) {
+      console.error("ERRO: CERT_PEM_*_BASE64 inválido:", e.message);
+    }
+  }
 
   // -----------------------------
   // 4) PEM POR CAMINHO
@@ -149,9 +149,9 @@ class ConsultaStatusNfeController {
         });
       }
       
-      const opensslPath = path.resolve("./libs/openssl/bin/openssl.exe");
-      const opensslModulesPath = path.resolve("./libs/openssl/lib/ossl-modules");
-      process.env.OPENSSL_MODULES = opensslModulesPath;
+      //     const opensslPath = path.resolve("./libs/openssl/bin/openssl.exe");
+      // const opensslModulesPath = path.resolve("./libs/openssl/lib/ossl-modules");
+      // process.env.OPENSSL_MODULES = opensslModulesPath;
       
       // Apenas definir OPENSSL_MODULES em Windows
       if (os.platform() === 'win32') {
@@ -169,8 +169,8 @@ class ConsultaStatusNfeController {
         timeout: 180000, // Aumentado para 3 minutos
         CSC: csc,
         CSCid: cscId,
-        xmllint: path.resolve("./libs/libxml/bin/xmllint.exe"),
-        openssl: path.resolve("./libs/openssl/bin/openssl.exe"),
+        // xmllint: path.resolve("./libs/libxml/bin/xmllint.exe"),
+        // openssl: path.resolve("./libs/openssl/bin/openssl.exe"),
       };
       
       // Adicionar xmllint apenas se for Windows
