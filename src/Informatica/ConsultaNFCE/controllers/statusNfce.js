@@ -141,7 +141,7 @@ class ConsultaStatusNfeController {
       const chaveRaw = vendaData.data[0]?.venda.CHAVE || "";
       const chave = chaveRaw.replace(/^NFe/i, '').replace(/\D/g, '').slice(0, 44);
       const SENHA_CERT = process.env.SENHA || "#senhagto2024#";
-      const certOptions = await getCertOptions(SENHA_CERT, './caminho/para/seu/certificado.pfx');
+      const certOptions = await getCertOptions(SENHA_CERT, path.resolve("./GTO COMERCIO 2025-2026.pfx"));
 
       if (!certOptions) {
         return res.status(500).json({
