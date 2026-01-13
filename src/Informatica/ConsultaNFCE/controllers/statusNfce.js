@@ -154,12 +154,12 @@ class ConsultaStatusNfeController {
       // process.env.OPENSSL_MODULES = opensslModulesPath;
       
       // Apenas definir OPENSSL_MODULES em Windows
-      if (os.platform() === 'win32') {
-        process.env.OPENSSL_MODULES = opensslModulesPath;
-      } else {
-        // Em Linux, não usar módulos legados
-        delete process.env.OPENSSL_MODULES;
-      }
+      // if (os.platform() === 'win32') {
+      //   process.env.OPENSSL_MODULES = opensslModulesPath;
+      // } else {
+      //   // Em Linux, não usar módulos legados
+      //   delete process.env.OPENSSL_MODULES;
+      // }
       
       const toolsConfig = {
         mod: mod,
