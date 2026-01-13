@@ -119,7 +119,7 @@ export async function getCertOptions(senha, fallbackPfxPath = './GTO COMERCIO 20
 
 
 class ConsultaStatusNfeController {
-   async validarConsulta(req, res) {
+  async validarConsulta(req, res) {
     try {
 
       let { vendas } = req.body;
@@ -202,7 +202,7 @@ class ConsultaStatusNfeController {
             toolsConfig.openssl = getToolPath('./libs/openssl/bin/', 'openssl');
           }
           const tools = new Tools(toolsConfig, certOptions);
-          
+
           const resposta = await tools.sefazStatus(CHAVE);
           
           const xml = resposta ?? null;
@@ -280,18 +280,15 @@ class ConsultaStatusNfeController {
         toolsConfig.openssl = getToolPath('./libs/openssl/bin/', 'openssl');
       }
       // Em Linux, usa os comandos do sistema automaticamente
-      
-      console.log('✅ Dados da venda carregados com sucesso');
-      console.log('⏳ Inicializando Tools...');
+  
       const tools = new Tools(toolsConfig, certOptions);
       
-      console.log('⏳ Consultando status SEFAZ para chave:', chave);
+    
       const resposta = await tools.sefazStatus(chave).catch(err => {
         console.error('❌ Erro ao consultar status da SEFAZ:', err.message);
         throw err;
       });
       
-      console.log('✅ Resposta SEFAZ recebida com sucesso');
  
       return res.json({
         vendaData,
@@ -325,18 +322,31 @@ class ConsultaStatusNfeController {
       const cnpj = vendaData.data[0]?.venda?.NFE_INFNFE_EMIT_CNPJ;
       const chaveRaw = vendaData.data[0]?.venda.CHAVE || "";
       const chave = chaveRaw.replace(/^NFe/i, '').replace(/\D/g, '').slice(0, 44);
-
-
       const SENHA_CERT = process.env.SENHA || "#senhagto2024#";
-      const certOptions = await getCertOptions(SENHA_CERT, './GTO COMERCIO 2025-2026.pfx');
+      const certOptions = await getCertOptions(SENHA_CERT, path.resolve("./GTO COMERCIO 2025-2026.pfx"));
 
+      console.log(mod, 'mod');
+      console.log(tpAmb, 'tpAmb');
+      console.log(uf, 'uf');
+      console.log(cnpj, 'cnpj');
+      console.log(chave, 'chave');
       if (!certOptions) {
         return res.status(500).json({
           error: 'Não foi possível carregar o certificado. Verifique as variáveis de ambiente ou o arquivo local.'
         });
       }
 
-      const tools = new Tools({
+        // Apenas definir OPENSSL_MODULES em Windows
+      if (os.platform() === 'win32') {
+        const opensslModulesPath = path.resolve("./libs/openssl/lib/ossl-modules");
+        process.env.OPENSSL_MODULES = opensslModulesPath;
+      } else {
+        // Em Linux, não usar módulos legados
+        delete process.env.OPENSSL_MODULES;
+      }
+      
+      
+      const toolsConfig = {
         mod: mod,
         tpAmb: tpAmb,
         UF: String(uf),
@@ -344,22 +354,55 @@ class ConsultaStatusNfeController {
         CNPJ: cnpj,
         CSC: csc,
         CSCid: cscId,
-      }, certOptions);
+      }
   
-      tools.sefazDistDFe({chNFe: chave}).then(res => {
-        console.log('Status da SEFAZ:', res);
-        fs.writeFileSync(`./xml-download/NFe-${chave}.xml.zip`, res);
-        docZip(res)
-          .then(() => {
-            console.log(`Arquivo NFe-${chave}.xml extraído com sucesso!`);
+        // Adicionar xmllint e openssl apenas em Windows
+      if (os.platform() === 'win32') {
+        toolsConfig.xmllint = getToolPath('./libs/libxml/bin/', 'xmllint');
+        toolsConfig.openssl = getToolPath('./libs/openssl/bin/', 'openssl');
+      }
+      // Em Linux, usa os comandos do sistema automaticamente
+      const tools = new Tools(toolsConfig, certOptions);
+
+      // tools.sefazDistDFe({chNFe: chave}).then(res => {
+      //   console.log('Status da SEFAZ:', res);
+      //   fs.writeFileSync(`./xml-download/NFe-${chave}.xml.zip`, res);
+      //   docZip(res)
+      //     .then(() => {
+      //       console.log(`Arquivo NFe-${chave}.xml extraído com sucesso!`);
+      //     })
+      //     .catch(err => {
+      //       console.error('Erro ao extrair o arquivo XML:', err.message);
+      //     });
+      // }).catch(err => {
+      //   console.error('Erro ao consultar status da SEFAZ:', err.message);
+      //   fs.writeFileSync(`./xml-download/Erro-NFe-${chave}.xml`, JSON.stringify(err, null, 2));
+      // })
+      
+      tools.sefazDistDFe({chNFe: chave})
+      .then(zipBuffer => {
+        console.log('XML baixado da SEFAZ');
+        
+        // ✅ Extrair ZIP
+        docZip(zipBuffer)
+          .then(xmlContent => {
+            // ✅ Enviar para download direto
+            res.setHeader('Content-Type', 'application/xml');
+            res.setHeader('Content-Disposition', `attachment; filename="NFe-${chave}.xml"`);
+            res.send(xmlContent);
+            
+            // Opcional: Salvar cópia local também
+            // fs.writeFileSync(`./xml-download/NFe-${chave}.xml`, xmlContent);
           })
           .catch(err => {
-            console.error('Erro ao extrair o arquivo XML:', err.message);
+            console.error('Erro ao extrair ZIP:', err.message);
+            res.status(500).json({ error: 'Erro ao extrair arquivo' });
           });
-      }).catch(err => {
-        console.error('Erro ao consultar status da SEFAZ:', err.message);
-        fs.writeFileSync(`./xml-download/Erro-NFe-${chave}.xml`, JSON.stringify(err, null, 2));
       })
+      .catch(err => {
+        console.error('Erro ao consultar SEFAZ:', err.message);
+        res.status(500).json({ error: 'Erro ao baixar XML da SEFAZ' });
+      });
 
       return res.json(vendaData);
     } catch (error) {
