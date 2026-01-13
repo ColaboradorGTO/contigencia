@@ -1054,7 +1054,7 @@ class ConsultaNfeController {
           );
 
           const resposta = await tools.sefazStatus(CHAVE);
-          console.log('resposta status sefaz:', resposta);
+       
 
           const xml = resposta ?? null;
           const cstat =
