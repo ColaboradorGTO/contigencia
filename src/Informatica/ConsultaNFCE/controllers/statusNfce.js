@@ -60,16 +60,16 @@ export async function getCertOptions(senha, fallbackPfxPath = './GTO COMERCIO 20
   // -----------------------------
   // 1) PFX BASE64 VIA ENV
   // -----------------------------
-  if (process.env.CERT_PFX_BASE64) {
-    try {
-      const buf = Buffer.from(process.env.CERT_PFX_BASE64, "base64");
-      if (buf.length > 0) {
-        return { pfx: buf, senha };
-      }
-    } catch (e) {
-      console.error("ERRO: CERT_PFX_BASE64 inválido:", e.message);
-    }
-  }
+  // if (process.env.CERT_PFX_BASE64) {
+  //   try {
+  //     const buf = Buffer.from(process.env.CERT_PFX_BASE64, "base64");
+  //     if (buf.length > 0) {
+  //       return { pfx: buf, senha };
+  //     }
+  //   } catch (e) {
+  //     console.error("ERRO: CERT_PFX_BASE64 inválido:", e.message);
+  //   }
+  // }
 
   // -----------------------------
   // 2) PFX ARQUIVO LOCAL
