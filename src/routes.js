@@ -18,6 +18,8 @@ routes.get('/valida-venda-contingencia', ConsultaNfeController.validarStatusSefa
 routes.put('/valida-venda-contingencia/:id', ConsultaNfeController.putValidarVendaContigencia);
 routes.get('/status-sefaz', ConsultaStatusNfeController.statusSefaz);
 routes.post('/consultar-nfce', ConsultaNFceController.consultaNFce);
+// routes.post('/consultar-nfce', ConsultaNFceController.consultaNFce);
+// routes.post('/assinar-e-enviar', ConsultaNFceController.assinarEEnviar);
 routes.post('/downloadXML', ConsultaStatusNfeController.downloadNFE);
 routes.post('/cancelar-nfe', ConsultaStatusNfeController.cancelarNFE);
 routes.post('/inutilizar-nfe', ConsultaStatusNfeController.inutilizarNFE);

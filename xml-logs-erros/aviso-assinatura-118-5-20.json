@@ -1,0 +1,9 @@
+{
+  "idVenda": "118-5-20",
+  "aviso": "A biblioteca node-sped-nfe tem um erro crítico ao tentar gerar QRCode durante a assinatura",
+  "erro": "TypeError: Cannot read properties of undefined (reading \"SignedInfo\")",
+  "localizacao": "node_modules/node-sped-nfe/dist/utils/tools.js:686",
+  "solucao": "Usar uma biblioteca alternativa ou corrigir o bug na biblioteca",
+  "xmlFile": "./xml-nfe/nfe118-5-20-unsigned.xml",
+  "timestamp": "2026-01-13T19:19:33.449Z"
+}

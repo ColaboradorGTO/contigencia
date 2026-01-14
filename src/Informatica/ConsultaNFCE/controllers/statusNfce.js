@@ -134,6 +134,7 @@ class ConsultaStatusNfeController {
         if (pageSize) queryParams.append('pageSize', pageSize);
         
         const apiUrl = `http://164.152.245.77:8000/quality/concentrador_homologacao/api/venda/valida-venda-contingencia.xsjs?page=${page}&pageSize=${pageSize}`;
+       
         const response = await axios.get(apiUrl);
         vendas = response.data;
       }
@@ -164,9 +165,12 @@ class ConsultaStatusNfeController {
         const IDVENDA = String(row.IDVENDA ?? "").trim();
         const UF = String(row.NFE_INFNFE_EMIT_ENDEREMIT_UF ?? "").trim();
         const CHAVE = String(row.CHAVE ?? "").trim();
+        const cscId = row.IDTOKEN || "1";
+        const csc = row.TOKENCSC || "";
+        const mod = String(row.NFE_INFNFE_IDE_MOD || "65");
+        const tpAmb = parseInt(row.NFE_INFNFE_IDE_TPAMB || 2);
         const SENHA_CERT = process.env.SENHA || "#senhagto2024#";
         const certOptions = await getCertOptions(SENHA_CERT, path.resolve("./GTO COMERCIO 2025-2026.pfx"));
-
         if (!CHAVE) {
           resultados.push({ IDVENDA, UF, error: "CHAVE ausente" });
           continue;
@@ -189,10 +193,12 @@ class ConsultaStatusNfeController {
 
         try {
           const toolsConfig = {
-            mod: "65",
-            tpAmb: 2,
+            mod: mod,
+            tpAmb: tpAmb,
             UF: UF,
             versao: "4.00",
+            CSC: csc,
+            CSCid: cscId,
           }
           
           
@@ -210,7 +216,7 @@ class ConsultaStatusNfeController {
             resposta?.retConsSitNFe?.cStat ??
             (xml?.match(/<cStat>(\d+)<\/cStat>/)?.[1] ?? null);
 
-          resultados.push({ IDVENDA, UF, CHAVE, CSTAT: cstat, XML: xml });
+          resultados.push({ IDVENDA, UF, CHAVE, CSTAT: cstat, mod, tpAmb, XML: xml });
         } catch (e) {
           resultados.push({ IDVENDA, UF, CHAVE, error: e.message });
         }

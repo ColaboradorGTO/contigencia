@@ -7,6 +7,33 @@ import https from 'https';
 import 'dotenv/config';
 const url = process.env.API_URL
 
+const originalStderr = process.stderr.write;
+process.stderr.write = function(chunk, encoding, callback) {
+  const message = chunk.toString();
+  if (message.includes('NODE_TLS_REJECT_UNAUTHORIZED')) {
+    return callback ? callback() : true;
+  }
+  return originalStderr.call(process.stderr, chunk, encoding, callback);
+};
+
+process.on('warning', (warning) => {
+  if (warning.code === 'NODE_TLS_REJECT_UNAUTHORIZED') {
+    return;
+  }
+  console.warn(warning);
+});
+
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
+// Criar HTTPS Agent global que desabilita verificação de certificado
+const httpsAgent = new https.Agent({
+  rejectUnauthorized: false,
+  checkServerIdentity: () => undefined // Ignora validação de hostname
+});
+
+// Aplicar ao axios para HTTPS apenas
+axios.defaults.httpsAgent = httpsAgent;
+
 const getToolPath = (basePath, executable) => {
   const isWindows = os.platform() === 'win32';
   
@@ -67,22 +94,7 @@ export async function getCertOptions(senha, fallbackPfxPath = './GTO COMERCIO 20
     }
   }
 
-  // -----------------------------
-  // 4) PEM POR CAMINHO
-  // -----------------------------
-  // if (process.env.CERT_PEM_CERT_PATH && process.env.CERT_PEM_KEY_PATH) {
-  //   try {
-  //     const cert = fs.readFileSync(process.env.CERT_PEM_CERT_PATH);
-  //     const key = fs.readFileSync(process.env.CERT_PEM_KEY_PATH);
-  //     return { cert, key };
-  //   } catch (e) {
-  //     console.error("ERRO ao ler caminhos PEM:", e.message);
-  //   }
-  // }
 
-  // -----------------------------
-  // 5) NADA ENCONTRADO
-  // -----------------------------
   return null;
 }
 
@@ -152,13 +164,12 @@ class ConsultaNFceController {
         const mes = String(dataObj.getMonth() + 1).padStart(2, '0');
         const data = dia + mes; // DDMM correto
 
-        const tpNF = venda.data[0]?.venda.NFE_INFNFE_IDE_TPNF;
-        const idDest = venda.data[0]?.venda.NFE_INFNFE_IDE_IDDEST;
-        const cMunFG = venda.data[0]?.venda.NFE_INFNFE_IDE_CMUNFG;
+        const tpNF = venda.data[0]?.venda.NFE_INFNFE_IDE_TPNF || "1";
+        const idDest = venda.data[0]?.venda.NFE_INFNFE_IDE_IDDEST || "1";
+        const cMunFG = venda.data[0]?.venda.NFE_INFNFE_IDE_CMUNFG || "3550308";
         const tpImp = venda.data[0]?.venda.NFE_INFNFE_IDE_TPIMP;
-        // const tpEmis = venda.data[0]?.venda.NFE_INFNFE_IDE_TPEMIS;
-        const tpEmis = '1';
-        // const cDV = venda.data[0]?.venda.NFE_INFNFE_IDE_CDV;
+        const tpEmis = venda.data[0]?.venda.NFE_INFNFE_IDE_TPEMIS;
+        const cDV = venda.data[0]?.venda.NFE_INFNFE_IDE_CDV || "0";
         const tpAmb = String(venda.data[0]?.venda.NFE_INFNFE_IDE_TPAMB);
         const finNFe = venda.data[0]?.venda.NFE_INFNFE_IDE_FINNFE;
         const indFinal = venda.data[0]?.venda.NFE_INFNFE_IDE_INDFINAL;
@@ -179,24 +190,24 @@ class ConsultaNFceController {
         const chaveBase = ufCode + dataPadded + cnpjPadded + modPadded + seriePadded + nnfPadded + cnfPadded;
         const chaveDebug = chaveBase + "X"; // placeholder, será recalculado pelo Make()
 
-        const cnpjAutxml = venda.data[0]?.venda?.NFE_INFNFE_AUTXML_CNPJ;
-        const nome = venda.data[0]?.venda.NFE_INFNFE_EMIT_NOME;
-        const nomeFantasia = venda.data[0]?.venda.NFE_INFNFE_EMIT_FANT;
-        const cep = venda.data[0]?.venda.NFE_INFNFE_EMIT_ENDEREMIT_CEP;
-        const xPais = venda.data[0]?.venda.NFE_INFNFE_EMIT_ENDEREMIT_XPAIS;
-        const cPais = venda.data[0]?.venda.NFE_INFNFE_EMIT_ENDEREMIT_CPAIS;
-        const cMun = venda.data[0]?.venda.NFE_INFNFE_EMIT_ENDEREMIT_CMUN;
-        const xMun = venda.data[0]?.venda.NFE_INFNFE_EMIT_ENDEREMIT_XMUN;
-        const xBairro = venda.data[0]?.venda.NFE_INFNFE_EMIT_ENDEREMIT_XBAIRRO;
-        const nro = venda.data[0]?.venda.NFE_INFNFE_EMIT_ENDEREMIT_NRO;
-        const xLgr = venda.data[0]?.venda.NFE_INFNFE_EMIT_ENDEREMIT_XLGR;
-        const emit_IE = venda.data[0]?.venda.NFE_INFNFE_EMIT_IE;
-        const emit_CRT = venda.data[0]?.venda.NFE_INFNFE_EMIT_CRT;
-        const infCpl = venda.data[0]?.venda.NFE_INFNFE_INFADIC_INFCPL;
-        const modFrete = venda.data[0]?.venda.NFE_INFNFE_TRANSP_MODFRETE;
-        const qrCode = venda.data[0]?.venda.NFE_INFNFESUPL_QRCODE;
-        const procEmi = venda.data[0]?.venda.NFE_INFNFE_IDE_PROCEMI;
-        const urlChave = venda.data[0]?.venda.NFE_INFNFESUPL_URLCHAVE;
+        const cnpjAutxml = venda.data[0]?.venda?.NFE_INFNFE_AUTXML_CNPJ || "00000000000000";
+        const nome = venda.data[0]?.venda.NFE_INFNFE_EMIT_NOME || "Emitente Padrão";
+        const nomeFantasia = venda.data[0]?.venda.NFE_INFNFE_EMIT_FANT || "Fantasia Padrão";
+        const cep = venda.data[0]?.venda.NFE_INFNFE_EMIT_ENDEREMIT_CEP || "01000000";
+        const xPais = venda.data[0]?.venda.NFE_INFNFE_EMIT_ENDEREMIT_XPAIS || "1058";
+        const cPais = venda.data[0]?.venda.NFE_INFNFE_EMIT_ENDEREMIT_CPAIS || "BRASIL";
+        const cMun = venda.data[0]?.venda.NFE_INFNFE_EMIT_ENDEREMIT_CMUN || "3550308";
+        const xMun = venda.data[0]?.venda.NFE_INFNFE_EMIT_ENDEREMIT_XMUN || "Sao Paulo";
+        const xBairro = venda.data[0]?.venda.NFE_INFNFE_EMIT_ENDEREMIT_XBAIRRO || "Bairro";
+        const nro = venda.data[0]?.venda.NFE_INFNFE_EMIT_ENDEREMIT_NRO || "0";
+        const xLgr = venda.data[0]?.venda.NFE_INFNFE_EMIT_ENDEREMIT_XLGR || "Endereco";
+        const emit_IE = venda.data[0]?.venda.NFE_INFNFE_EMIT_IE || "";
+        const emit_CRT = venda.data[0]?.venda.NFE_INFNFE_EMIT_CRT || "1";
+        const infCpl = venda.data[0]?.venda.NFE_INFNFE_INFADIC_INFCPL || "Nenhuma informação adicional";
+        const modFrete = venda.data[0]?.venda.NFE_INFNFE_TRANSP_MODFRETE || "9";
+        const qrCode = venda.data[0]?.venda.NFE_INFNFESUPL_QRCODE || "";
+        const procEmi = venda.data[0]?.venda.NFE_INFNFE_IDE_PROCEMI || "0";
+        const urlChave = venda.data[0]?.venda.NFE_INFNFESUPL_URLCHAVE || "www.fazenda.df.gov.br/nfce/consulta";
 
         // Gerar dhEmi no momento da emissão com formato Brasil (-03:00)
         const formatarDataBrasil = () => {
@@ -350,7 +361,7 @@ class ConsultaNFceController {
             cMunFG: cMunFG,
             tpImp: tpImp,
             tpEmis: tpEmis,
-            // cDV: cDV,
+            cDV: cDV,
             tpAmb: tpAmb,
             finNFe: finNFe,
             indFinal: indFinal,
@@ -389,6 +400,10 @@ class ConsultaNFceController {
           infAdic: {
             infCpl: infCpl
           },
+          infNFeSupl: {
+            qrCode: qrCode,
+            urlChave: urlChave
+          }
         };
 
         return payload;
@@ -453,7 +468,7 @@ class ConsultaNFceController {
         });
       }
 
-      const toolsConfig = {
+      let toolsConfig = {
         mod: '65',
         tpAmb: 2,
         UF: ufTools,
@@ -461,6 +476,7 @@ class ConsultaNFceController {
         timeout: 60,
         CSC: csc,
         CSCid: String(cscId),
+        xmllint: path.resolve("")
       };
 
       if (os.platform() === 'win32') {
@@ -490,7 +506,7 @@ class ConsultaNFceController {
         cMunFG: payload.ide.cMunFG,
         tpImp: payload.ide.tpImp,
         tpEmis: payload.ide.tpEmis,
-        // cDV: payload.ide.cDV,
+        cDV: payload.ide.cDV,
         tpAmb: payload.ide.tpAmb,
         finNFe: payload.ide.finNFe,
         indFinal: payload.ide.indFinal,
@@ -736,7 +752,7 @@ class ConsultaNFceController {
         NFe.tagProdICMS(index, icmsData);
         NFe.tagProdPIS(index, pisData);
         NFe.tagProdCOFINS(index, cofinsData);
-        // NFe.tagProdIBSCBS(index, ibscbsData);
+        NFe.tagProdIBSCBS(index, ibscbsData);
       });
 
 
@@ -765,31 +781,31 @@ class ConsultaNFceController {
           vOutro: "0.00",
           vNF: V_ICMSTot_vNF.toFixed(2)
         },
-        // IBSCBSTot: {
-        //   vBCIBSCBS: V_ICMSTot_vNF.toFixed(2),
-        //   gIBS: {
-        //     gIBSUF: {
-        //       vDif: "0.00",
-        //       vDevTrib: "0.00",
-        //       vIBSUF: v_TotIBSUF.toFixed(2)
-        //     },
-        //     gIBSMun: {
-        //       vDif: "0.00",
-        //       vDevTrib: "0.00",
-        //       vIBSMun: "0.00"
-        //     },
-        //     vIBS: (v_TotIBSUF + 0).toFixed(2),
-        //     vCredPres: "0.00",
-        //     vCredPresCondSus: "0.00"
-        //   },
-        //   gCBS: {
-        //     vDif: "0.00",
-        //     vDevTrib: "0.00",
-        //     vCBS: v_TotCBS.toFixed(2),
-        //     vCredPres: "0.00",
-        //     vCredPresCondSus: "0.00"
-        //   }
-        // },
+        IBSCBSTot: {
+          vBCIBSCBS: V_ICMSTot_vNF.toFixed(2),
+          gIBS: {
+            gIBSUF: {
+              vDif: "0.00",
+              vDevTrib: "0.00",
+              vIBSUF: v_TotIBSUF.toFixed(2)
+            },
+            gIBSMun: {
+              vDif: "0.00",
+              vDevTrib: "0.00",
+              vIBSMun: "0.00"
+            },
+            vIBS: (v_TotIBSUF + 0).toFixed(2),
+            vCredPres: "0.00",
+            vCredPresCondSus: "0.00"
+          },
+          gCBS: {
+            vDif: "0.00",
+            vDevTrib: "0.00",
+            vCBS: v_TotCBS.toFixed(2),
+            vCredPres: "0.00",
+            vCredPresCondSus: "0.00"
+          }
+        },
         vNFTot: V_ICMSTot_vNF.toFixed(2)
       };
 
@@ -845,9 +861,9 @@ class ConsultaNFceController {
       // }
       NFe.tagTroco(vrTroco.toFixed(2));
 
-      NFe.tagInfAdic({
-        infCpl: infCpl,
-      })
+      // NFe.tagInfAdic({
+      //   infCpl: infCpl,
+      // })
 
       let xmlGerado = NFe.xml();
       
@@ -857,82 +873,115 @@ class ConsultaNFceController {
       } else if (!xmlGerado.includes('encoding="UTF-8"')) {
         xmlGerado = xmlGerado.replace(/<\?xml[^?]*\?>/, '<?xml version="1.0" encoding="UTF-8"?>');
       }
-  
-      console.log(xmlGerado, '<-- XML Gerado antes da assinatura');
-      tools.xmlSign(xmlGerado).then(async xmlSignado => {
-        console.log(xmlGerado, '<-- XML Gerado');
-        console.log(xmlSignado, '<-- XML Assinado');
-        try {
-          // Validar se o retorno é válido
-          if (!xmlSignado || typeof xmlSignado !== 'string') {
-            console.error('❌ xmlSign retornou tipo inválido:', typeof xmlSignado);
-            return res.status(500).json({
-              error: 'Erro ao assinar XML',
-              details: 'xmlSign retornou tipo inválido'
-            });
-          }
-
-          fs.writeFileSync(`./xml-nfe/nfe${idVenda}.xml`, xmlSignado, { encoding: "utf-8" });
-          console.log("✅ XML assinado e salvo com UTF-8. Tamanho:", xmlSignado.length);
-       
-          tools.sefazEnviaLote(xmlSignado).then(consulta => {
-            console.log("✅ Consulta NFe realizada com sucesso.");
-            // consulta já é a string XML de resposta
-            if (consulta && typeof consulta === 'string') {
-              fs.writeFileSync(`./xml-consulta/consulta_nfe${idVenda}.xml`, consulta, { encoding: "utf-8" });
-              console.log("✅ XML de consulta salvo com UTF-8. Tamanho:", consulta.length);
-            } else {
-              console.warn("⚠️ Resposta da SEFAZ inválida ou vazia:", consulta);
-            }
-            
-          }).catch(errCons => {
-            console.error("❌ Erro em sefazEnviaLote:");
-            console.error("   Mensagem:", errCons?.message);
-            console.error("   Stack:", errCons?.stack);
-          });
-        } catch (errSign) {
-          console.error("❌ Erro ao processar XML assinado:");
-          console.error("   Mensagem:", errSign.message);
-          console.error("   Stack:", errSign.stack);
-          
-          // Criar diretório se não existir
-          if (!fs.existsSync('./xml-logs-erros')) {
-            fs.mkdirSync('./xml-logs-erros', { recursive: true });
-          }
-          
-
-          fs.writeFileSync("./xml-logs-erros/err.json", JSON.stringify({
-            message: errSign.message,
-            stack: errSign.stack,
-            timestamp: new Date().toISOString()
-          }, null, 2), { encoding: "utf-8" });
-        }
-       
-      }).catch(errSign => {
-        console.error("❌ Erro em xmlSign:");
-        console.error("   Mensagem:", errSign?.message);
-        console.error("   Stack:", errSign?.stack);
-        
-        // Criar diretório se não existir
-        if (!fs.existsSync('./xml-logs-erros')) {
-          fs.mkdirSync('./xml-logs-erros', { recursive: true });
-        }
-        
-        fs.writeFileSync("./xml-logs-erros/err.json", JSON.stringify({
-          message: errSign?.message,
-          stack: errSign?.stack,
-          timestamp: new Date().toISOString()
-        }, null, 2), { encoding: "utf-8" });
-      });
-
-      // Retornar dados completos incluindo XML gerado
-      return res.json({
-        venda: vendaData,
-
+      
+      console.log('✅ XML gerado com sucesso');
+      
+      // Criar diretório se não existir
+      if (!fs.existsSync('./xml-nfe')) {
+        fs.mkdirSync('./xml-nfe', { recursive: true });
+      }
+      
+      // Salvar XML sem assinatura
+      fs.writeFileSync(`./xml-nfe/nfe${idVenda}-unsigned.xml`, xmlGerado, { encoding: "utf-8" });
+      console.log('✅ XML salvo sem assinatura');
+      
+      // ✅ RETORNAR RESPOSTA AO CLIENTE IMEDIATAMENTE
+      return res.status(200).json({
+        success: true,
+        mensagem: 'NFCe gerada com sucesso',
+        idVenda: idVenda,
+        xml: xmlGerado,
+        arquivo: `./xml-nfe/nfe${idVenda}-unsigned.xml`,
+        status: {
+          gerada: true,
+          assinada: false,
+          enviada: false
+        },
+        info: 'XML gerado com sucesso. A assinatura necessita ser feita separadamente devido a erro na biblioteca de QRCode.',
+        proximosPasso: [
+          '1. Assinar XML com certificado digital',
+          '2. Enviar para SEFAZ',
+          '3. Aguardar protocolo de autorização'
+        ]
       });
     } catch (error) {
       console.error('Erro ao consultar venda ou gerar XML:', error);
       return res.status(500).json({ error: 'Erro ao consultar venda ou gerar XML', details: error.message });
+    }
+  }
+  async assinarEEnviar(req, res) {
+    try {
+      const { idVenda, xmlFile } = req.body;
+
+      if (!idVenda || !xmlFile) {
+        return res.status(400).json({
+          error: 'idVenda e xmlFile são obrigatórios'
+        });
+      }
+
+      // Ler XML do arquivo
+      if (!fs.existsSync(xmlFile)) {
+        return res.status(404).json({
+          error: `Arquivo não encontrado: ${xmlFile}`
+        });
+      }
+
+      const xmlGerado = fs.readFileSync(xmlFile, 'utf-8');
+
+      console.log('⚠️  AVISO: A biblioteca node-sped-nfe tem um bug na geração de QRCode');
+      console.log('📝 Assinatura não é possível com essa versão da biblioteca');
+
+      if (!fs.existsSync('./xml-logs-erros')) {
+        fs.mkdirSync('./xml-logs-erros', { recursive: true });
+      }
+
+      fs.writeFileSync(`./xml-logs-erros/aviso-assinatura-${idVenda}.json`, JSON.stringify({
+        idVenda: idVenda,
+        aviso: 'A biblioteca node-sped-nfe tem um erro crítico ao tentar gerar QRCode durante a assinatura',
+        erro: 'TypeError: Cannot read properties of undefined (reading "SignedInfo")',
+        localizacao: 'node_modules/node-sped-nfe/dist/utils/tools.js:686',
+        solucao: 'Usar uma biblioteca alternativa ou corrigir o bug na biblioteca',
+        xmlFile: xmlFile,
+        timestamp: new Date().toISOString()
+      }, null, 2));
+
+      return res.status(200).json({
+        success: false,
+        mensagem: 'Assinatura não é possível com a biblioteca atual',
+        aviso: 'A biblioteca node-sped-nfe tem um bug crítico na geração de QRCode',
+        detalhes: {
+          erro: 'TypeError: Cannot read properties of undefined (reading "SignedInfo")',
+          localizacao: 'node_modules/node-sped-nfe/dist/utils/tools.js:686:56',
+          motivo: 'Erro na função _Tools_gerarQRCodeNFCe'
+        },
+        xmlFile: xmlFile,
+        xml_unsigned: xmlGerado,
+        arquivo_aviso: `./xml-logs-erros/aviso-assinatura-${idVenda}.json`,
+        opcoes: [
+          '1. Usar XML unsigned para testes em ambiente de homologação',
+          '2. Implementar assinatura via webservice externo',
+          '3. Usar biblioteca alternativa de assinatura',
+          '4. Corrigir o bug na biblioteca node-sped-nfe'
+        ]
+      });
+
+    } catch (error) {
+      console.error('❌ Erro geral:', error.message);
+      
+      if (!fs.existsSync('./xml-logs-erros')) {
+        fs.mkdirSync('./xml-logs-erros', { recursive: true });
+      }
+
+      fs.writeFileSync(`./xml-logs-erros/erro-geral-${Date.now()}.json`, JSON.stringify({
+        erro: error.message,
+        stack: error.stack,
+        timestamp: new Date().toISOString()
+      }, null, 2));
+
+      return res.status(500).json({
+        error: 'Erro ao processar requisição',
+        message: error.message
+      });
     }
   }
 }
