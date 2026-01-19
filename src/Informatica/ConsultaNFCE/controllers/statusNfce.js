@@ -123,7 +123,7 @@ class ConsultaStatusNfeController {
     try {
 
       let { vendas } = req.body;
-      let { page, pageSize } = req.query;
+      let { page, pageSize, dataInicio, dataFim } = req.query;
       
       if (!vendas) {
         page = page || '';
@@ -132,8 +132,10 @@ class ConsultaStatusNfeController {
         const queryParams = new URLSearchParams();
         if (page) queryParams.append('page', page);
         if (pageSize) queryParams.append('pageSize', pageSize);
+        if (dataInicio) queryParams.append('dataInicio', dataInicio);
+        if (dataFim) queryParams.append('dataFim', dataFim);
         
-        const apiUrl = `http://164.152.245.77:8000/quality/concentrador/api/venda/valida-venda-contingencia.xsjs?page=${page}&pageSize=${pageSize}`;
+        const apiUrl = `http://164.152.245.77:8000/quality/concentrador/api/venda/valida-venda-contingencia.xsjs?page=${page}&pageSize=${pageSize}&dataInicio=${dataInicio}&dataFim=${dataFim}`;
        
         const response = await axios.get(apiUrl);
         vendas = response.data;
