@@ -1,5 +1,5 @@
 import app from './app.js';
-const PORT = process.env.PORT || 6001;
+const PORT = process.env.PORT || 6002;
 
 
 app.listen(PORT, () => {
