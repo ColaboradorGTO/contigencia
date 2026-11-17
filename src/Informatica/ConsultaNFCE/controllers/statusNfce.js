@@ -56,7 +56,7 @@ const getToolPath = (basePath, executable) => {
   return path.resolve(`${basePath}${executable}${ext}`);
 };
 
-export async function getCertOptions(senha, fallbackPfxPath = './GTO COMERCIO 2025-2026.pfx') {
+export async function getCertOptions(senha, fallbackPfxPath = './GTO COMERCIO 2026-2027.pfx') {
   // -----------------------------
   // 1) PFX BASE64 VIA ENV
   // -----------------------------
@@ -171,8 +171,8 @@ class ConsultaStatusNfeController {
         const csc = row.TOKENCSC || "";
         const mod = String(row.NFE_INFNFE_IDE_MOD || "65");
         const tpAmb = parseInt(row.NFE_INFNFE_IDE_TPAMB || 2);
-        const SENHA_CERT = process.env.SENHA || "#senhagto2024#";
-        const certOptions = await getCertOptions(SENHA_CERT, path.resolve("./GTO COMERCIO 2025-2026.pfx"));
+        const SENHA_CERT = process.env.SENHA || "#GTO@2026#";
+        const certOptions = await getCertOptions(SENHA_CERT, path.resolve("./GTO COMERCIO 2026-2027.pfx"));
         if (!CHAVE) {
           resultados.push({ IDVENDA, UF, error: "CHAVE ausente" });
           continue;
@@ -254,8 +254,8 @@ class ConsultaStatusNfeController {
       const tpAmb = parseInt(vendaData.data[0]?.venda.NFE_INFNFE_IDE_TPAMB || 2);
       const chaveRaw = vendaData.data[0]?.venda.CHAVE || "";
       const chave = chaveRaw.replace(/^NFe/i, '').replace(/\D/g, '').slice(0, 44);
-      const SENHA_CERT = process.env.SENHA || "#senhagto2024#";
-      const certOptions = await getCertOptions(SENHA_CERT, path.resolve("./GTO COMERCIO 2025-2026.pfx"));
+      const SENHA_CERT = process.env.SENHA || "#GTO@2026#";
+      const certOptions = await getCertOptions(SENHA_CERT, path.resolve("./GTO COMERCIO 2026-2027.pfx"));
 
       if (!certOptions) {
         return res.status(500).json({
@@ -318,7 +318,7 @@ class ConsultaStatusNfeController {
         return res.status(400).json({ error: "idVenda é obrigatório" });
       }
 
-      const response = await axios.get(`http://164.152.245.77:8000/quality/concentrador_homologacao/api/venda/lista-venda-new-xml.xsjs?id=${idVenda}`);
+      const response = await axios.get(`http://164.152.245.77:8000/quality/concentrador/api/venda/lista-venda-new-xml.xsjs?id=${idVenda}`);
       const vendaData = response.data;
 
       const configData = response.data.data[0]?.configuracao?.[0]?.config || {};
@@ -330,8 +330,8 @@ class ConsultaStatusNfeController {
       const cnpj = vendaData.data[0]?.venda?.NFE_INFNFE_EMIT_CNPJ;
       const chaveRaw = vendaData.data[0]?.venda.CHAVE || "";
       const chave = chaveRaw.replace(/^NFe/i, '').replace(/\D/g, '').slice(0, 44);
-      const SENHA_CERT = process.env.SENHA || "#senhagto2024#";
-      const certOptions = await getCertOptions(SENHA_CERT, path.resolve("./GTO COMERCIO 2025-2026.pfx"));
+      const SENHA_CERT = process.env.SENHA || "#GTO@2026#";
+      const certOptions = await getCertOptions(SENHA_CERT, path.resolve("./GTO COMERCIO 2026-2027.pfx"));
 
       console.log(mod, 'mod');
       console.log(tpAmb, 'tpAmb');
@@ -427,7 +427,7 @@ class ConsultaStatusNfeController {
         return res.status(400).json({ error: "idVenda é obrigatório" });
       }
 
-      const response = await axios.get(`http://164.152.245.77:8000/quality/concentrador_homologacao/api/venda/lista-venda-new-xml.xsjs?id=${idVenda}`);
+      const response = await axios.get(`http://164.152.245.77:8000/quality/concentrador/api/venda/lista-venda-new-xml.xsjs?id=${idVenda}`);
       const vendaData = response.data;
 
       const configData = response.data.data[0]?.configuracao?.[0]?.config || {};
@@ -441,8 +441,8 @@ class ConsultaStatusNfeController {
       const chave = chaveRaw.replace(/^NFe/i, '').replace(/\D/g, '').slice(0, 44);
 
 
-      const SENHA_CERT = process.env.SENHA || "#senhagto2024#";
-      const certOptions = await getCertOptions(SENHA_CERT, './GTO COMERCIO 2025-2026.pfx');
+      const SENHA_CERT = process.env.SENHA || "#GTO@2026#";
+      const certOptions = await getCertOptions(SENHA_CERT, './GTO COMERCIO 2026-2027.pfx');
 
       if (!certOptions) {
         return res.status(500).json({
@@ -501,8 +501,8 @@ class ConsultaStatusNfeController {
       const chave = chaveRaw.replace(/^NFe/i, '').replace(/\D/g, '').slice(0, 44);
       const serie = vendaData.data[0]?.venda.NFE_INFNFE_IDE_SERIE;
 
-      const SENHA_CERT = process.env.SENHA || "#senhagto2024#";
-      const certOptions = await getCertOptions(SENHA_CERT, './GTO COMERCIO 2025-2026.pfx');
+      const SENHA_CERT = process.env.SENHA || "#GTO@2026#";
+      const certOptions = await getCertOptions(SENHA_CERT, './GTO COMERCIO 2026-2027.pfx');
 
       if (!certOptions) {
         return res.status(500).json({
