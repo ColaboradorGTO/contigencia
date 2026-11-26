@@ -191,7 +191,8 @@ class TransformarNotaController {
                     // console.log(toolsConfig, 'tools')
                     // console.log(certOptions, 'certOptions')
                     console.log(tools, 'tools')
-                    const resposta = await tools.sefazStatus(CHAVE);
+                    // const resposta = await tools.sefazStatus(CHAVE);
+                    const resposta = await tools.consultarNFe(CHAVE);
                     
                     const xml = resposta ?? null;
                     const cstat =
