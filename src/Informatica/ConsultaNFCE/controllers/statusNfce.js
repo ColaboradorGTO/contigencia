@@ -541,4 +541,6 @@ class ConsultaStatusNfeController {
 
 }
 
+7280010
+
 export default new ConsultaStatusNfeController();

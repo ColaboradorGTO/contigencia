@@ -3,6 +3,7 @@ import ConsultaNfeController from './Informatica/ConsultaNFCE/controllers/consul
 import ConsultaNFceController  from './Informatica/ConsultaNFCE/controllers/index.js'
 import ConsultaNFeController from './Informatica/ConsultaNFCE/controllers/nfe.js'
 import ConsultaStatusNfeController from './Informatica/ConsultaNFCE/controllers/statusNfce.js'
+import TransformarNotaController from './Informatica/ConsultaNFCE/controllers/transformarnfe.js'
 
 
 const routes = new Router();
@@ -17,6 +18,7 @@ routes.get('/', (req, res) => {
 routes.get('/valida-venda-contingencia', ConsultaNfeController.validarStatusSefaz);
 routes.put('/valida-venda-contingencia/:id', ConsultaNfeController.putValidarVendaContigencia);
 routes.get('/status-sefaz', ConsultaStatusNfeController.statusSefaz);
+routes.get('/transformar', TransformarNotaController.transformar)
 routes.post('/consultar-nfce', ConsultaNFceController.consultaNFce);
 // routes.post('/consultar-nfce', ConsultaNFceController.consultaNFce);
 // routes.post('/assinar-e-enviar', ConsultaNFceController.assinarEEnviar);
